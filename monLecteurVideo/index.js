@@ -110,6 +110,45 @@ div.controls:hover {
   #video-trois:hover { border: 1px solid yellow; }
   #video-quatre:hover { border: 1px solid yellow; }
 
+  .tooltip {
+    position: relative;
+    display: inline-block;
+    border-bottom: 1px dotted black;
+  }
+
+  .tooltip .tooltiptext {
+    visibility: hidden;
+    width: 150px;
+    background-color: black;
+    color: #fff;
+    text-align: center;
+    border-radius: 6px;
+    padding: 5px 0;
+    position: absolute;
+    z-index: 1;
+    bottom: 150%;
+    left: 50%;
+    margin-left: -60px;
+  }
+  
+  .tooltip .tooltiptext::after {
+    content: "";
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    margin-left: -5px;
+    border-width: 5px;
+    border-style: solid;
+    border-color: black transparent transparent transparent;
+  }
+  
+  .tooltip:hover .tooltiptext {
+    visibility: visible;
+  }
+
+  #playlist {
+    margin-top : 30px;
+  }
 
   `;
 let template = /*html*/ `
@@ -140,7 +179,8 @@ let template = /*html*/ `
   <button id="stop"><i class="material-icons">stop</i></button>
   <button id="avance10"><i class="material-icons">fast_forward</i></button>
   <button id="suivant"><i class="material-icons">skip_next</i></button>
-  <button id="info">ℹ️</button>
+  <button id="info" class="tooltip">ℹ️ <span class="tooltiptext" id="tool"></span></button>
+  
   <br>
   <br>
   <span id="vitesse">Vitesse : <button id="vitesse1">x1</button><button id="vitesse4">x4</button></span>
@@ -187,6 +227,7 @@ let template = /*html*/ `
            </div>
 
            <div class="nextVideo">
+           <h3 id="playlist">Playlist : </h3>
            <img id="video-deux" src="./assets/pluie.png" id="pluie" width="150" height="100">
            <br>
            <img id="video-trois" src="./assets/carillon.png" id="carillon" width="150" height="100">
@@ -324,9 +365,9 @@ class MyVideoPlayer extends HTMLElement {
 
     this.shadowRoot.querySelector("#precedent").onclick = () => this.precedent()
 
-    this.shadowRoot.querySelector("#info").onclick = () => {
-      console.log("Durée de la vidéo : " + this.player.duration);
-      console.log("Temps courant : " + this.player.currentTime);
+    this.shadowRoot.querySelector("#info").onmouseover = (event) => {
+      let popup = this.shadowRoot.querySelector("#tool")
+      popup.innerHTML= "Durée de la vidéo : " + this.player.duration + "</br> Temps courant : " + this.player.currentTime
     }
 
     /*this.shadowRoot.querySelector("#video-une").onclick = () => {
