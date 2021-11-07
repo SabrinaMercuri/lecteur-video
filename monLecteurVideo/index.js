@@ -142,7 +142,7 @@ let template = /*html*/`
   <button id="info">ℹ️</button>
   <br>
   <br>
-  <span id="vitesse">Vitesse : <button id="vitesse4">x4</button></span>
+  <span id="vitesse">Vitesse : <button id="vitesse1">x1</button><button id="vitesse4">x4</button></span>
   <span id="volume1">Volume :<webaudio-knob id="volume" min=0 max=1 value=0.5 step="0.01" 
           diameter="40" src="./assets/LittlePhatty.png" sprites="100"></webaudio-knob></span>
          
@@ -295,6 +295,10 @@ class MyVideoPlayer extends HTMLElement {
 
         this.shadowRoot.querySelector("#recule10").onclick = () => {
           this.player.currentTime -= 10;
+        }
+
+        this.shadowRoot.querySelector("#vitesse1").onclick = () => {
+          this.player.playbackRate = 1;
         }
 
         this.shadowRoot.querySelector("#vitesse4").onclick = () => {
