@@ -1,10 +1,10 @@
-
 import './lib/webaudio-controls.js';
 
 const ctx = window.AudioContext || window.webkitAudioContext
 const context = new ctx()
 const getBaseURL = () => {
-    return new URL('.', import.meta.url);
+  return new URL('.',
+    import.meta.url);
 };
 
 let style = `
@@ -110,8 +110,9 @@ div.controls:hover {
   #video-trois:hover { border: 1px solid yellow; }
   #video-quatre:hover { border: 1px solid yellow; }
 
+
   `;
-let template = /*html*/`
+let template = /*html*/ `
 <div class="contenu">
 <div class="videoPlayer">
   <video id="player" crossorigin="anonymous">
@@ -181,8 +182,9 @@ let template = /*html*/`
              <input id="control5" type="range" value="0" step="1" min="-30" max="30"></input>
          <output id="gain5">0 dB</output>
            </div>
+           <br>
+           <canvas id="myCanvas" width=400 height=100></canvas>
            </div>
-
 
            <div class="nextVideo">
            <img id="video-deux" src="./assets/pluie.png" id="pluie" width="150" height="100">
@@ -196,229 +198,315 @@ let template = /*html*/`
    `;
 
 class MyVideoPlayer extends HTMLElement {
-    constructor() {
-        super();
+  constructor() {
+    super();
 
-        this.filters = [];
-        console.log("BaseURL = " + getBaseURL());
+    this.filters = [];
+    console.log("BaseURL = " + getBaseURL());
 
-        this.attachShadow({ mode: "open" });
+    this.attachShadow({
+      mode: "open"
+    });
 
-        this.mesVideos = 0; ///video html
-        this.tabVideo = [
-          "./monLecteurVideo/assets/pluie.mp4",
-          "./monLecteurVideo/assets/carillon.mp4",
-          "./monLecteurVideo/assets/musique.mp4"
-        ]
-        
-    }
+    this.mesVideos = 0; ///video html
+    this.tabVideo = [
+      "./monLecteurVideo/assets/pluie.mp4",
+      "./monLecteurVideo/assets/carillon.mp4",
+      "./monLecteurVideo/assets/musique.mp4"
+    ]
 
-    fixRelativeURLs() {
-        // pour les knobs
-        let knobs = this.shadowRoot.querySelectorAll('webaudio-knob, webaudio-switch, webaudio-slider, img');
-        knobs.forEach((e) => {
-            let path = e.getAttribute('src');
-            e.src = getBaseURL() + '/' + path;
-        });
-    }
-    connectedCallback() {
-        // Appelée avant affichage du composant
-        //this.shadowRoot.appendChild(template.content.cloneNode(true));
-		    this.shadowRoot.innerHTML = `<style>${style}</style>${template}`;
-        /// ou "<style> " + style +"</style> " + template
-        
-        this.fixRelativeURLs();
+  }
 
-        this.player = this.shadowRoot.querySelector("#player");
-        // récupération de l'attribut HTML
-        this.player.src = this.getAttribute("src");
+  fixRelativeURLs() {
+    // pour les knobs
+    let knobs = this.shadowRoot.querySelectorAll('webaudio-knob, webaudio-switch, webaudio-slider, img');
+    knobs.forEach((e) => {
+      let path = e.getAttribute('src');
+      e.src = getBaseURL() + '/' + path;
+    });
+  }
+  connectedCallback() {
+    // Appelée avant affichage du composant
+    //this.shadowRoot.appendChild(template.content.cloneNode(true));
+    this.shadowRoot.innerHTML = `<style>${style}</style>${template}`;
+    /// ou "<style> " + style +"</style> " + template
+
+    this.fixRelativeURLs();
+
+    this.player = this.shadowRoot.querySelector("#player");
+    // récupération de l'attribut HTML
+    this.player.src = this.getAttribute("src");
 
 
-    
+
     // create the equalizer. It's a set of biquad Filters
     this.sourceNode = context.createMediaElementSource(this.player);
-    
+
     // Init filters
     this.filterinit()
-    
- // Connect filters in serie
+
+    // Connect filters in serie
     this.sourceNode.connect(this.filters[0]);
     for (var i = 0; i < this.filters.length - 1; i++) {
-       this.filters[i].connect(this.filters[i + 1]);
+      this.filters[i].connect(this.filters[i + 1]);
     }
 
-// connect the last filter to the speakers
-  this.filters[this.filters.length - 1].connect(context.destination);
+    // connect the last filter to the speakers
+    this.filters[this.filters.length - 1].connect(context.destination);
 
 
-  this.shadowRoot.querySelector("#control0").oninput = (event) => this.setFilter(event.target.value,0)
-  this.shadowRoot.querySelector("#control1").oninput = (event) => this.setFilter(event.target.value,1)
-  this.shadowRoot.querySelector("#control2").oninput = (event) => this.setFilter(event.target.value,2)
-  this.shadowRoot.querySelector("#control3").oninput = (event) => this.setFilter(event.target.value,3)
-  this.shadowRoot.querySelector("#control4").oninput = (event) => this.setFilter(event.target.value,4)
-  this.shadowRoot.querySelector("#control5").oninput = (event) => this.setFilter(event.target.value,5)
+    this.shadowRoot.querySelector("#control0").oninput = (event) => this.setFilter(event.target.value, 0)
+    this.shadowRoot.querySelector("#control1").oninput = (event) => this.setFilter(event.target.value, 1)
+    this.shadowRoot.querySelector("#control2").oninput = (event) => this.setFilter(event.target.value, 2)
+    this.shadowRoot.querySelector("#control3").oninput = (event) => this.setFilter(event.target.value, 3)
+    this.shadowRoot.querySelector("#control4").oninput = (event) => this.setFilter(event.target.value, 4)
+    this.shadowRoot.querySelector("#control5").oninput = (event) => this.setFilter(event.target.value, 5)
 
-  this.progressBar = this.shadowRoot.getElementById("progress-bar");
-  this.timeCurrent = this.shadowRoot.getElementById("progress-current");
+    this.progressBar = this.shadowRoot.getElementById("progress-bar");
+    this.timeCurrent = this.shadowRoot.getElementById("progress-current");
     this.timeMax = this.shadowRoot.getElementById("progress-max");
 
-      // déclarer les écouteurs sur les boutons
-      this.definitEcouteurs();
-      this.avancement();
+    this.canvas = this.shadowRoot.getElementById("myCanvas");
+    this.width = this.canvas.width;
+    this.height = this.canvas.height;
+    this.canvasContext = this.canvas.getContext("2d");
+
+    this.buildAudioGraph();
+    requestAnimationFrame(() => {
+      this.visualize2()
+    })
+
+
+    // déclarer les écouteurs sur les boutons
+    this.definitEcouteurs();
+    this.avancement();
+
+  }
+
+  definitEcouteurs() {
+    console.log("ecouteurs définis")
+    this.shadowRoot.querySelector("#play").onclick = () => {
+      /*this.play();*/
+      this.player.play();
+    }
+    this.shadowRoot.querySelector("#pause").onclick = () => {
+      /*this.pause();*/
+      this.player.pause();
     }
 
-
-    definitEcouteurs() {
-        console.log("ecouteurs définis")
-        this.shadowRoot.querySelector("#play").onclick = () => {
-           /*this.play();*/
-          this.player.play();
-        }
-        this.shadowRoot.querySelector("#pause").onclick = () => {
-            /*this.pause();*/
-            this.player.pause();
-        }
-
-        this.shadowRoot.querySelector("#stop").onclick = () => {
-          this.player.pause();
-          this.player.currentTime = 0;
-        }
-
-        this.shadowRoot.querySelector("#volume").oninput = (event) => {
-            const vol = parseFloat(event.target.value);
-            this.player.volume = vol;
-        }
-
-        this.shadowRoot.querySelector("#avance10").onclick = () => {
-          this.player.currentTime += 10;
-        }
-
-        this.shadowRoot.querySelector("#recule10").onclick = () => {
-          this.player.currentTime -= 10;
-        }
-
-        this.shadowRoot.querySelector("#vitesse1").onclick = () => {
-          this.player.playbackRate = 1;
-        }
-
-        this.shadowRoot.querySelector("#vitesse4").onclick = () => {
-          this.player.playbackRate = 4;
-        }
-
-        this.shadowRoot.querySelector("#suivant").onclick = () => this.suivant()
-
-        this.shadowRoot.querySelector("#precedent").onclick = () => this.precedent()
-
-        this.shadowRoot.querySelector("#info").onclick = () => {
-          console.log("Durée de la vidéo : " + this.player.duration);
-          console.log("Temps courant : " + this.player.currentTime);
-        }
-
-        /*this.shadowRoot.querySelector("#video-une").onclick = () => {
-          this.mesVideos=0;
-          this.player.src= this.tabVideo[this.mesVideos];
-        }*/
-
-        this.shadowRoot.querySelector("#video-deux").onclick = () => {
-          this.mesVideos=0;
-          this.player.src= this.tabVideo[this.mesVideos];
-        }
-
-        this.shadowRoot.querySelector("#video-trois").onclick = () => {
-          this.mesVideos=1;
-          this.player.src= this.tabVideo[this.mesVideos];
-        }
-
-        this.shadowRoot.querySelector("#video-quatre").onclick = () => {
-          this.mesVideos=2;
-          this.player.src= this.tabVideo[this.mesVideos];
-        }
-        
+    this.shadowRoot.querySelector("#stop").onclick = () => {
+      this.player.pause();
+      this.player.currentTime = 0;
     }
 
-    suivant() {
-        ///pour passer de la 4 à la 1
-         if(this.mesVideos==2) {
-           this.mesVideos=0;
-         }
-         else {
-           this.mesVideos++;
-         }
-         this.player.src= this.tabVideo[this.mesVideos];
+    this.shadowRoot.querySelector("#volume").oninput = (event) => {
+      const vol = parseFloat(event.target.value);
+      this.player.volume = vol;
     }
 
-    precedent() {
-      if(this.mesVideos==0) {
-        this.mesVideos=2;
-      }
-      else {
-        this.mesVideos--;
-      }
+    this.shadowRoot.querySelector("#avance10").onclick = () => {
+      this.player.currentTime += 10;
+    }
+
+    this.shadowRoot.querySelector("#recule10").onclick = () => {
+      this.player.currentTime -= 10;
+    }
+
+    this.shadowRoot.querySelector("#vitesse1").onclick = () => {
+      this.player.playbackRate = 1;
+    }
+
+    this.shadowRoot.querySelector("#vitesse4").onclick = () => {
+      this.player.playbackRate = 4;
+    }
+
+    this.shadowRoot.querySelector("#suivant").onclick = () => this.suivant()
+
+    this.shadowRoot.querySelector("#precedent").onclick = () => this.precedent()
+
+    this.shadowRoot.querySelector("#info").onclick = () => {
+      console.log("Durée de la vidéo : " + this.player.duration);
+      console.log("Temps courant : " + this.player.currentTime);
+    }
+
+    /*this.shadowRoot.querySelector("#video-une").onclick = () => {
+      this.mesVideos=0;
       this.player.src= this.tabVideo[this.mesVideos];
-      
+    }*/
+
+    this.shadowRoot.querySelector("#video-deux").onclick = () => {
+      this.mesVideos = 0;
+      this.player.src = this.tabVideo[this.mesVideos];
     }
 
-    avancement() {
-      this.player.ontimeupdate = (event) => {
-        if (!isNaN(this.player.duration)) {
-          const time = event.target.currentTime;
-          this.progressBar.value = event.target.currentTime;
-          const minutes = Math.floor(time / 60);
-          const seconds = (time - minutes * 60).toFixed(0);
-          this.timeCurrent.innerHTML = `${minutes}:${this.changeNb(seconds)}`;
-        }
-      };
-  
-      this.player.onloadedmetadata = () => {
-        this.progressBar.max = this.player.duration;
-  
-        const minutes = Math.floor(this.player.duration / 60);
-        const seconds = (this.player.duration - minutes * 60).toFixed(0);
-  
-        this.timeCurrent.innerHTML = "0:00";
-        this.timeMax.innerHTML = `${minutes}:${this.changeNb(seconds)}`;
-      };
-  
-      this.player.onplay = () => {
-        context.resume();
-      };
-  
-      // Progress
-      this.progressBar.onclick = (event) => {
-        const x = event.pageX - this.progressBar.offsetLeft;
-        const y = event.pageY - this.progressBar.offsetTop;
-        const clickedValue = (x * this.progressBar.max) / this.progressBar.offsetWidth;
-        this.player.currentTime = clickedValue;
-      };
+    this.shadowRoot.querySelector("#video-trois").onclick = () => {
+      this.mesVideos = 1;
+      this.player.src = this.tabVideo[this.mesVideos];
     }
 
-    // API de mon composant
-    /*play() {this.player.play();}
-    pause() {this.player.pause();}*/
-
-    changeNb(baseNumber) {
-      return ("0"+baseNumber).slice(-2);
+    this.shadowRoot.querySelector("#video-quatre").onclick = () => {
+      this.mesVideos = 2;
+      this.player.src = this.tabVideo[this.mesVideos];
     }
 
-    filterinit() {
-      let tableau =[60, 170, 350, 1000, 3500, 10000]
-      this.filters=[]
-      for(let freq of tableau) {
-        let eq = context.createBiquadFilter();
-        eq.frequency.value = freq;
-        eq.type = "peaking";
-        eq.gain.value = 0;
-        this.filters.push(eq);
+  }
+
+  buildAudioGraph() {
+
+    // Create an analyser node
+    this.analyser = context.createAnalyser();
+
+    // Try changing for lower values: 512, 256, 128, 64...
+    this.analyser.fftSize = 512;
+    this.bufferLength = this.analyser.frequencyBinCount;
+    this.dataArray = new Uint8Array(this.bufferLength);
+
+    // connect the last filter to the speakers
+    this.filters[this.filters.length - 1].connect(this.analyser);
+
+    this.analyser.connect(context.destination);
+  }
+
+  visualize2() {
+    this.canvasContext.save();
+    this.canvasContext.fillStyle = "#9DA9CE";
+    this.canvasContext.fillRect(0, 0, this.width, this.height);
+
+    this.analyser.getByteFrequencyData(this.dataArray);
+    var nbFreq = this.dataArray.length;
+
+    var SPACER_WIDTH = 5;
+    var BAR_WIDTH = 2;
+    var OFFSET = 100;
+    var CUTOFF = 23;
+    var HALF_HEIGHT = this.height / 2;
+    var numBars = 1.7 * Math.round(this.width / SPACER_WIDTH);
+    var magnitude;
+
+    this.canvasContext.lineCap = 'round';
+
+    for (var i = 0; i < numBars; ++i) {
+      magnitude = 0.3 * this.dataArray[Math.round((i * nbFreq) / numBars)];
+
+      this.canvasContext.fillStyle = "hsl( " + Math.round((i * 360) / numBars) + ", 100%, 50%)";
+      this.canvasContext.fillRect(i * SPACER_WIDTH, HALF_HEIGHT, BAR_WIDTH, -magnitude);
+      this.canvasContext.fillRect(i * SPACER_WIDTH, HALF_HEIGHT, BAR_WIDTH, magnitude);
     }
-    }
-    setFilter(sliderVal,nbFilter) {
-      let value = parseFloat(sliderVal);
-      this.filters[nbFilter].gain.value = value;
-      
-      // update output labels
-      let output = this.shadowRoot.querySelector("#gain"+nbFilter);
-      output.innerHTML = value + " dB";
+
+    // Draw animated white lines top
+    this.canvasContext.strokeStyle = "white";
+    this.canvasContext.beginPath();
+
+    for (i = 0; i < numBars; ++i) {
+      magnitude = 0.3 * this.dataArray[Math.round((i * nbFreq) / numBars)];
+      if (i > 0) {
+        //console.log("line lineTo "  + i*SPACER_WIDTH + ", " + -magnitude);
+        this.canvasContext.lineTo(i * SPACER_WIDTH, HALF_HEIGHT - magnitude);
+      } else {
+        //console.log("line moveto "  + i*SPACER_WIDTH + ", " + -magnitude);
+        this.canvasContext.moveTo(i * SPACER_WIDTH, HALF_HEIGHT - magnitude);
       }
+    }
+    for (i = 0; i < numBars; ++i) {
+      magnitude = 0.3 * this.dataArray[Math.round((i * nbFreq) / numBars)];
+      if (i > 0) {
+        //console.log("line lineTo "  + i*SPACER_WIDTH + ", " + -magnitude);
+        this.canvasContext.lineTo(i * SPACER_WIDTH, HALF_HEIGHT + magnitude);
+      } else {
+        //console.log("line moveto "  + i*SPACER_WIDTH + ", " + -magnitude);
+        this.canvasContext.moveTo(i * SPACER_WIDTH, HALF_HEIGHT + magnitude);
+      }
+    }
+    this.canvasContext.stroke();
+
+    this.canvasContext.restore();
+
+    requestAnimationFrame(() => {
+      this.visualize2()
+    })
+  }
+
+  suivant() {
+    ///pour passer de la 4 à la 1
+    if (this.mesVideos == 2) {
+      this.mesVideos = 0;
+    } else {
+      this.mesVideos++;
+    }
+    this.player.src = this.tabVideo[this.mesVideos];
+  }
+
+  precedent() {
+    if (this.mesVideos == 0) {
+      this.mesVideos = 2;
+    } else {
+      this.mesVideos--;
+    }
+    this.player.src = this.tabVideo[this.mesVideos];
+
+  }
+
+  avancement() {
+    this.player.ontimeupdate = (event) => {
+      if (!isNaN(this.player.duration)) {
+        const time = event.target.currentTime;
+        this.progressBar.value = event.target.currentTime;
+        const minutes = Math.floor(time / 60);
+        const seconds = (time - minutes * 60).toFixed(0);
+        this.timeCurrent.innerHTML = `${minutes}:${this.changeNb(seconds)}`;
+      }
+    };
+
+    this.player.onloadedmetadata = () => {
+      this.progressBar.max = this.player.duration;
+
+      const minutes = Math.floor(this.player.duration / 60);
+      const seconds = (this.player.duration - minutes * 60).toFixed(0);
+
+      this.timeCurrent.innerHTML = "0:00";
+      this.timeMax.innerHTML = `${minutes}:${this.changeNb(seconds)}`;
+    };
+
+    this.player.onplay = () => {
+      context.resume();
+    };
+
+    // Progress
+    this.progressBar.onclick = (event) => {
+      const x = event.pageX - this.progressBar.offsetLeft;
+      const y = event.pageY - this.progressBar.offsetTop;
+      const clickedValue = (x * this.progressBar.max) / this.progressBar.offsetWidth;
+      this.player.currentTime = clickedValue;
+    };
+  }
+
+  // API de mon composant
+  /*play() {this.player.play();}
+  pause() {this.player.pause();}*/
+
+  changeNb(baseNumber) {
+    return ("0" + baseNumber).slice(-2);
+  }
+
+  filterinit() {
+    let tableau = [60, 170, 350, 1000, 3500, 10000]
+    this.filters = []
+    for (let freq of tableau) {
+      let eq = context.createBiquadFilter();
+      eq.frequency.value = freq;
+      eq.type = "peaking";
+      eq.gain.value = 0;
+      this.filters.push(eq);
+    }
+  }
+  setFilter(sliderVal, nbFilter) {
+    let value = parseFloat(sliderVal);
+    this.filters[nbFilter].gain.value = value;
+
+    // update output labels
+    let output = this.shadowRoot.querySelector("#gain" + nbFilter);
+    output.innerHTML = value + " dB";
+  }
 
 }
 
