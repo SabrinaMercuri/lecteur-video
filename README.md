@@ -1,4 +1,4 @@
-# lecteur-video
+# Projet lecteur-video (web-component)
 
 Mon lecteur vidéo contient :  
 - 3 vidéos (que l'on peut changer grâce aux boutons précédent ⏮ et suivant ⏭️ ou directement en cliquant sur les miniatures à droite)  
@@ -13,3 +13,8 @@ Mon lecteur vidéo contient :
 - le temps total et le temps à l'intant T de la vidéo à droite de la barre de progression   
 - différentes barres pour changer les fréquences de la vidéo  
 - un visualiseur des fréquences   
+
+
+# Réalisé par : 
+Sabrina Mercuri  
+M2 Intense  
